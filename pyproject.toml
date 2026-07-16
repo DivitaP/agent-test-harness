@@ -1,0 +1,26 @@
+[project]
+name = "agent-harness"
+version = "0.1.0"
+description = "Semantic testing harness for LangGraph agents"
+requires-python = ">=3.10"
+dependencies = [
+    "pydantic>=2.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0"]
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/agent_harness"]
+
+[tool.pytest.ini_options]
+# The Anaconda Python on this machine segfaults while pytest imports readline.
+# Disable pytest's capture plugin so the test command can still run.
+addopts = "-p no:capture"
+# The package uses a src/ layout; make the checkout importable during tests.
+pythonpath = ["src"]

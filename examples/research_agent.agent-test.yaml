@@ -1,0 +1,22 @@
+target: "demo_agent.graph:app"
+tests:
+  - name: "answers factual question with retrieval"
+    input: "What were the key findings in study T123?"
+    process:
+      expected_tools: ["retrieve_docs", "summarize"]
+      strict_order: true
+    evidence:
+      required: true
+    output:
+      rubric: >
+        Answer must mention specific findings from the retrieved study,
+        cite the study ID, and not fabricate data not present in sources.
+      threshold: 0.7
+    runs: 3
+
+  - name: "simple math skips retrieval"
+    input: "What is 15% of 240?"
+    process:
+      expected_tools: ["calculator"]
+    output:
+      rubric: "Answer must equal 36."
