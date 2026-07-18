@@ -1,0 +1,8 @@
+target: "tests.fixture_agent:direct_answer_app"
+tests:
+  - name: "should gather evidence but does not"
+    input: "study T123 findings"
+    evidence:
+      required: true
+    output:
+      rubric: "Any answer."

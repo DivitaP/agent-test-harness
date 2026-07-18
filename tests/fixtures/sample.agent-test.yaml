@@ -1,0 +1,11 @@
+target: "tests.fixture_agent:app"
+tests:
+  - name: "happy path with all three scorers"
+    input: "study T123 findings"
+    process:
+      expected_tools: ["retrieve_docs", "summarize"]
+    evidence:
+      required: true
+    output:
+      rubric: "Answer must be a summary derived from retrieved documents."
+    runs: 2

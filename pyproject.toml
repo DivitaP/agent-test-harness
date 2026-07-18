@@ -27,3 +27,6 @@ packages = ["src/agent_harness"]
 addopts = "-p no:capture"
 # The package uses a src/ layout; make the checkout importable during tests.
 pythonpath = ["src"]
+
+[project.scipts]
+agent-harness = "agent_harness.cli:main"

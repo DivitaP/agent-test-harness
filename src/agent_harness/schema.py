@@ -53,6 +53,10 @@ class AgentTest(BaseModel):
     evidence: EvidenceExpectation | None = None
     output: OutputExpectation
     runs: int = Field(default=1, ge=1, le=20, description="Repeat count for flakiness.")
+    min_pass_rate:float = Field(
+        default=1.0, ge=0.0, le=1.0,
+        description="Fraction of runs that must pass for the test to pass.",
+    )
 
     @field_validator("name")
     @classmethod

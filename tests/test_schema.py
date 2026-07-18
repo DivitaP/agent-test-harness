@@ -52,3 +52,7 @@ def test_discover_finds_example():
     found = discover_suites(EXAMPLES)
     assert len(found) == 1
     assert found[0].name == "research_agent.agent-test.yaml"
+
+def test_min_pass_rate_default():
+    t = AgentTest.model_validate({"name": "t", "input": "q", "output": {"rubric": "r"}})
+    assert t.min_pass_rate == 1.0
