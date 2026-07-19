@@ -72,8 +72,16 @@ def run_suite(
     judge_client: Any = None,
     embed_fn: EmbedFn | None = None,
     judge_model: str = DEFAULT_JUDGE_MODEL,
+    test_filter: list[str] | None = None,
 ) -> SuiteResult:
     suite = load_suite(path)
+    tests_to_run = suite.tests
+    if test_filter:
+        wanted = set(test_filter)
+        tests_to_run = [t for t in suite.tests if t.name in wanted]
+        if not tests_to_run:
+            raise ValueError(f"no tests match filter: {sorted(wanted)}")
+
     app = load_target(suite.target)
     start = time.monotonic()
     tests = [

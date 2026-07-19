@@ -1,3 +1,4 @@
+import pytest
 from pathlib import Path
 
 from agent_harness.schema import AgentTest
@@ -50,3 +51,10 @@ def test_agent_crash_is_failed_run_not_harness_crash():
     assert not r.passed
     out = next(s for s in r.runs[0].scores if s.scorer == "output")
     assert "agent run failed" in out.reason
+
+
+def test_run_suite_filter_no_match():
+    with pytest.raises(ValueError, match="no tests match"):
+        run_suite(FIXTURES / "sample.agent-test.yaml",
+                  judge_client=FakeJudge(0.9), test_filter=["nope"])
+        

@@ -48,6 +48,9 @@ def main(
     run_p.add_argument("--json", action="store_true", help="print JSON report to stdout")
     run_p.add_argument("--output", help="also write the JSON report to this file")
     run_p.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
+    run_p.add_argument("--test", action="append", dest="test_names", metavar="NAME",
+                       help="run only the named test (repeatable); requires a single suite file",
+                       )
 
     args = parser.parse_args(argv)
 
@@ -65,6 +68,10 @@ def main(
         print(f"path not found: {path}", file=sys.stderr)
         return 2
     
+    if args.test_names and not path.is_file():
+        print("--test requires a single .agent-test.yaml file", file=sys.stderr)
+        return 2
+    
     sys.path.insert(0, os.getcwd()) # makes the users project importable as target
 
     suites = []
@@ -76,6 +83,7 @@ def main(
                     judge_client=judge_client,
                     embed_fn=embed_fn,
                     judge_model=args.judge_model,
+                    test_filter=args.test_names,
                 )
             )
         except Exception as e: # config errors, not test failures

@@ -54,3 +54,19 @@ def test_cli_writes_output_file(tmp_path, capsys):
     capsys.readouterr()
     assert code == 0
     assert json.loads(out_file.read_text())["all_passed"] is True
+
+def test_cli_test_filter_runs_only_named(capsys):
+    code = main(
+        ["run", str(FIXTURES / "sample.agent-test.yaml"), "--json",
+         "--test", "happy path with all three scorers"],
+        judge_client=FakeJudge(0.9),
+    )
+    report = json.loads(capsys.readouterr().out)
+    assert code == 0
+    assert report["total_tests"] == 1
+
+
+def test_cli_test_filter_rejects_directory(capsys):
+    code = main(["run", str(FIXTURES), "--test", "anything"])
+    assert code == 2
+    assert "single" in capsys.readouterr().err
