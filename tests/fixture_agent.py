@@ -30,7 +30,7 @@ class State(TypedDict):
     messages: Annotated[list[AnyMessage], add_messages]
 
 
-def _make_graph(tools_in_order):
+def _make_graph(tools_in_order, checkpointer=None):
     """Graph with one node per tool call, executed sequentially."""
     g = StateGraph(State)
 
@@ -53,7 +53,7 @@ def _make_graph(tools_in_order):
             g.add_edge(prev, t.name)
         prev = t.name
     g.add_edge(prev, END)
-    return g.compile()
+    return g.compile(checkpointer=checkpointer)
 
 
 app = _make_graph([retrieve_docs, summarize])

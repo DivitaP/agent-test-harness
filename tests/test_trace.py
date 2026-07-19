@@ -54,3 +54,13 @@ def test_load_target_bad_format():
 def test_load_target_missing_attr():
     with pytest.raises(ValueError, match="no attribute"):
         load_target("tests.test_trace:nonexistent")
+
+def test_checkpointed_graph_gets_fresh_thread_per_run():
+    from langgraph.checkpoint.memory import MemorySaver
+    from tests.fixture_agent import retrieve_docs, summarize
+
+    app_ck = _make_graph([retrieve_docs, summarize], checkpointer=MemorySaver())
+    run_single(app_ck, "first question")
+    t2 = run_single(app_ck, "second question")
+    # if runs shared a thread, run 2 would see run 1's messages first
+    assert "second question" in t2.tool_calls[0].input

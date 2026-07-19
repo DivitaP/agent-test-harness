@@ -11,6 +11,7 @@ from agent_harness.results import RunResult, SuiteResult, TestResult
 from agent_harness.runner import load_target, run_single
 from agent_harness.schema import AgentTest, load_suite
 from agent_harness.scorers import (
+    DEFAULT_JUDGE_MODEL,
     EmbedFn,
     score_evidence,
     score_output,
@@ -22,7 +23,7 @@ def run_test(
     test: AgentTest,
     judge_client: Any = None,
     embed_fn: EmbedFn | None = None,
-    judge_model: str = "gpt-5.6",
+    judge_model: str = DEFAULT_JUDGE_MODEL,
 ) -> TestResult:
     runs: list[RunResult] = []
 
@@ -70,7 +71,7 @@ def run_suite(
     path: str | Path,
     judge_client: Any = None,
     embed_fn: EmbedFn | None = None,
-    judge_model: str = "gpt-5.6",
+    judge_model: str = DEFAULT_JUDGE_MODEL,
 ) -> SuiteResult:
     suite = load_suite(path)
     app = load_target(suite.target)

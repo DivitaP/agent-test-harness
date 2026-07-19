@@ -39,7 +39,12 @@ def run_single(app: Any, task_input: str) -> Trace:
     try:
         result = app.invoke(
             { "messages": [HumanMessage(content=task_input)]},
-            config={"callbacks": [collector]},
+            config={"callbacks": [collector],
+                    # Fresh thread per run: checkpointed graphs require a thread_id
+                    # and an unique one guarantees no state bleeds between test runs
+                    # Graphs without a checkpointer ignore this key
+                    "configurable": {"thread_id": f"harness-{collector.trace.run_id}"},
+                    },
         )
         collector.trace.final_answer = _extract_final_answer(result)
     except Exception as e: # noqa: BLE001 — deliberate: harness must survive agent crashes

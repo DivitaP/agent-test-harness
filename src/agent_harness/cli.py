@@ -14,6 +14,7 @@ from typing import Any
 
 from agent_harness.results import Report
 from agent_harness.schema import discover_suites
+from agent_harness.scorers import DEFAULT_JUDGE_MODEL
 from agent_harness.suite_runner import run_suite
 
 def _render_console(report: Report) -> None:
@@ -46,7 +47,7 @@ def main(
     run_p.add_argument("path", help="a .agent-test.yaml file or a directory to search")
     run_p.add_argument("--json", action="store_true", help="print JSON report to stdout")
     run_p.add_argument("--output", help="also write the JSON report to this file")
-    run_p.add_argument("--judge-model", default="gpt-5.6")
+    run_p.add_argument("--judge-model", default=DEFAULT_JUDGE_MODEL)
 
     args = parser.parse_args(argv)
 

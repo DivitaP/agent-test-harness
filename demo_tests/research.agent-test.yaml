@@ -1,0 +1,49 @@
+target: "demo_agent.graph:app"
+tests:
+  - name: "direct study lookup by ID"
+    input: "What were the key findings of study T123?"
+    process:
+      expected_tools: ["get_study_details"]
+    evidence:
+      required: true
+    output:
+      rubric: >
+        Answer must state that compound ZX-14 reduced systolic blood pressure
+        by 12 mmHg in the treatment group, cite study T123, and must not
+        invent findings absent from the study text.
+      threshold: 0.7
+    runs: 2
+
+  - name: "math question uses calculator"
+    input: "What is 15% of 240?"
+    process:
+      expected_tools: ["calculator"]
+    output:
+      rubric: "Answer must equal 36."
+      threshold: 0.7
+
+  - name: "topic search then detail fetch"
+    input: "Find the study about sleep quality and summarize its key findings."
+    process:
+      expected_tools: ["search_studies", "get_study_details"]
+      strict_order: true
+    evidence:
+      required: true
+      min_relevance: 0.3
+    output:
+      rubric: >
+        Answer must reference study SL-88 and its finding that sleep onset
+        latency improved by 22 percent, grounded in the retrieved text.
+      threshold: 0.7
+    runs: 2
+
+  - name: "search resilience under flaky upstream"
+    input: "Find the study about sleep quality and name its study ID."
+    process:
+      expected_tools: ["search_studies"]
+      strict_order: false
+    output:
+      rubric: "Answer must include the study ID SL-88."
+      threshold: 0.7
+    runs: 5
+    min_pass_rate: 0.9

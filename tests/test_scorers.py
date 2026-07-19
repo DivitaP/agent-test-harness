@@ -96,6 +96,22 @@ def test_evidence_relevance_below_threshold():
     assert not r.passed and r.score == 0.0
 
 
+def test_evidence_relevance_uses_local_fallback_without_api_key(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_ADMIN_KEY", raising=False)
+    exp = EvidenceExpectation(required=True, min_relevance=0.3)
+    trace = make_trace(
+        ["retrieve_docs"],
+        task="find sleep quality study",
+    )
+    trace.tool_calls[0].output = "Study SL-88 covers sleep quality in shift workers."
+
+    r = score_evidence(exp, trace)
+
+    assert r.passed
+    assert r.details["offline_scorer"] is True
+
+
 # ----------------------------------------------------------------- output
 
 class FakeJudge:
@@ -139,3 +155,18 @@ def test_output_handles_garbage_judge_response():
     r = score_output(exp, make_trace(["t"]), client=FakeJudge("not json at all"))
     assert not r.passed
     assert "unparseable" in r.reason
+
+
+def test_output_uses_local_fallback_without_api_key(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    monkeypatch.delenv("OPENAI_ADMIN_KEY", raising=False)
+    exp = OutputExpectation(
+        rubric="Answer must include the study ID SL-88.",
+        threshold=0.7,
+    )
+    trace = make_trace(final="The study ID is SL-88.")
+
+    r = score_output(exp, trace)
+
+    assert r.passed
+    assert r.details["offline_scorer"] is True

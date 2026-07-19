@@ -2,6 +2,8 @@
 Three independent scorers: process, evidence, output.
 """
 import json
+import os
+import re
 from collections import Counter
 from typing import Any, Callable, Literal
 
@@ -20,6 +22,57 @@ class ScoreResult(BaseModel):
     score: float = Field(ge=0.0, le=1.0)
     reason: str
     details: dict[str, Any] = Field(default_factory=dict)
+
+DEFAULT_JUDGE_MODEL = "gpt-5.6-sol"
+GROQ_BASE_URL = "https://api.groq.com/openai/v1"
+
+_STOPWORDS = {
+    "a", "about", "above", "absent", "agent", "all", "and", "answer", "be",
+    "by", "cite", "clearly", "equal", "every", "from", "given", "grounded",
+    "include", "invent", "must", "not", "of", "or", "reference", "retrieved",
+    "rubric", "satisfies", "say", "score", "state", "study", "text", "that",
+    "the", "to", "verdict", "well", "with",
+}
+
+def _has_openai_credentials() -> bool:
+    return bool(os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENAI_ADMIN_KEY"))
+
+def _judge_provider() -> str:
+    return os.environ.get("AGENT_HARNESS_JUDGE_PROVIDER", "openai").lower()
+
+def _judge_api_key() -> str | None:
+    if _judge_provider() == "groq":
+        return os.environ.get("GROQ_API_KEY")
+    return os.environ.get("OPENAI_API_KEY") or os.environ.get("OPENAI_ADMIN_KEY")
+
+def _judge_base_url() -> str | None:
+    if _judge_provider() == "groq":
+        return GROQ_BASE_URL
+    return os.environ.get("OPENAI_BASE_URL") or os.environ.get("OPENAI_API_BASE")
+
+def _has_live_judge_credentials() -> bool:
+    return bool(_judge_api_key())
+
+def _tokens(text: str) -> set[str]:
+    return {
+        t
+        for t in re.findall(r"[a-z0-9]+", text.lower())
+        if len(t) > 1 and t not in _STOPWORDS
+    }
+
+def _numeric_tokens(text: str) -> set[str]:
+    nums = set()
+    for raw in re.findall(r"\d+(?:\.\d+)?", text):
+        value = float(raw)
+        nums.add(str(int(value)) if value.is_integer() else str(value))
+    return nums
+
+def _lexical_relevance(task: str, evidence: str) -> float:
+    task_tokens = _tokens(task)
+    evidence_tokens = _tokens(evidence)
+    if not task_tokens or not evidence_tokens:
+        return 0.0
+    return len(task_tokens & evidence_tokens) / len(task_tokens)
 
 # ------------ process -------------------------------------------------------
 
@@ -112,6 +165,25 @@ def score_evidence(
             details={"evidence_count": len(evidence)},
         )
     
+    if embed_fn is None and not _has_openai_credentials():
+        sims = [_lexical_relevance(trace.input, chunk) for chunk in evidence]
+        best = max(sims) if sims else 0.0
+        passed = best >= exp.min_relevance
+        return ScoreResult(
+            scorer="evidence",
+            passed=passed,
+            score=best,
+            reason=(
+                f"best lexical evidence relevance {best:.2f} "
+                f"{'meets' if passed else 'below'} threshold {exp.min_relevance}"
+            ),
+            details={
+                "evidence_count": len(evidence),
+                "similarities": [round(s, 3) for s in sims],
+                "offline_scorer": True,
+            },
+        )
+
     # relevance check: best cosine similarity between task and any chunk
     embed = embed_fn or _openai_embed
     vectors = embed([trace.input] + evidence)
@@ -140,11 +212,40 @@ JUDGE_SYSTEM = (
     '{"score": <float 0..1>, "reasoning": "<one short paragraph>"}'
 )
 
+def _score_output_locally(exp: OutputExpectation, trace: Trace, model: str) -> ScoreResult:
+    rubric_tokens = _tokens(exp.rubric) | _numeric_tokens(exp.rubric)
+    answer_tokens = _tokens(trace.final_answer) | _numeric_tokens(trace.final_answer)
+
+    if not rubric_tokens:
+        score = 1.0 if trace.final_answer.strip() else 0.0
+        matched = set()
+    else:
+        matched = rubric_tokens & answer_tokens
+        score = len(matched) / len(rubric_tokens)
+
+    passed = score >= exp.threshold
+    return ScoreResult(
+        scorer="output",
+        passed=passed,
+        score=score,
+        reason=(
+            f"offline heuristic matched {len(matched)}/{len(rubric_tokens)} "
+            "rubric keyword(s)"
+        ),
+        details={
+            "threshold": exp.threshold,
+            "judge_model": model,
+            "offline_scorer": True,
+            "expected_terms": sorted(rubric_tokens),
+            "matched_terms": sorted(matched),
+        },
+    )
+
 def score_output(
     exp: OutputExpectation,
     trace: Trace,
     client: Any = None,
-    model: str = "gpt-5.6",
+    model: str = DEFAULT_JUDGE_MODEL,
 ) -> ScoreResult:
     
     # auto fail conditions where no judge call needed
@@ -165,9 +266,12 @@ def score_output(
             reason=f"agent produced an empty final answer",
         )
     
+    if client is None and not _has_live_judge_credentials():
+        return _score_output_locally(exp, trace, model)
+
     if client is None:
         from openai import OpenAI
-        client = OpenAI()
+        client = OpenAI(api_key=_judge_api_key(), base_url=_judge_base_url())
 
     user_msg = (
         f"TASK GIVEN TO AGENT:\n{trace.input}\n\n"
