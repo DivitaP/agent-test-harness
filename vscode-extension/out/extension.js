@@ -13,6 +13,12 @@ const lastReports = new Map(); // suite item id -> latest report
 function activate(context) {
     const controller = vscode.tests.createTestController("agentHarness", "Agent Harness");
     context.subscriptions.push(controller);
+    const suiteExcludeGlob = () => {
+        const excluded = vscode.workspace
+            .getConfiguration("agentHarness")
+            .get("exclude", ["**/node_modules/**"]);
+        return excluded.length ? `{${excluded.join(",")}}` : undefined;
+    };
     // --- discovery: suite file -> tests -> scorer children -------------
     const discover = async (uri) => {
         const doc = await vscode.workspace.openTextDocument(uri);
@@ -33,7 +39,7 @@ function activate(context) {
         controller.items.add(suiteItem);
     };
     vscode.workspace
-        .findFiles("**/*.agent-test.yaml", "**/node_modules/**")
+        .findFiles("**/*.agent-test.yaml", suiteExcludeGlob())
         .then((uris) => uris.forEach(discover));
     const watcher = vscode.workspace.createFileSystemWatcher("**/*.agent-test.yaml");
     watcher.onDidCreate(discover);

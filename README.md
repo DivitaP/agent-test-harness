@@ -50,6 +50,18 @@ call's name, input, output, error, and timing.
     export OPENAI_API_KEY=sk-...
     agent-harness run demo_tests/
 
+### Hackathon demo setup
+
+For a clean, repeatable demo environment—especially on a machine with an old
+virtual environment—run this once from the repository root:
+
+    bash scripts/bootstrap_demo.sh
+
+Then open the repository root in VS Code, press `F5` from
+`vscode-extension/` to launch the Extension Development Host, and open the
+repository root in that second window. The checked-in workspace settings point
+the extension at `scripts/run_harness.sh` and show only the Support Desk suite.
+
 ## Support Desk example
 
 The repository includes a complete fictional refund agent in

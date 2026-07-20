@@ -34,6 +34,12 @@
           "default": {},
           "additionalProperties": { "type": "string" },
           "description": "Extra environment variables for test runs (e.g. DEMO_FAILURE_MODE)."
+        },
+        "agentHarness.exclude": {
+          "type": "array",
+          "default": ["**/node_modules/**"],
+          "items": { "type": "string" },
+          "description": "Glob patterns for .agent-test.yaml suites to hide from Test Explorer."
         }
       }
     }

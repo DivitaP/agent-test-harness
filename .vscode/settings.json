@@ -1,0 +1,9 @@
+{
+  "agentHarness.command": "bash scripts/run_harness.sh",
+  "agentHarness.exclude": [
+    "**/node_modules/**",
+    "**/tests/fixtures/**",
+    "**/examples/research_agent.agent-test.yaml",
+    "**/demo_tests/**"
+  ]
+}

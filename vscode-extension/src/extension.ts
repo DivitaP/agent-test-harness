@@ -12,6 +12,13 @@ export function activate(context: vscode.ExtensionContext) {
   const controller = vscode.tests.createTestController("agentHarness", "Agent Harness");
   context.subscriptions.push(controller);
 
+  const suiteExcludeGlob = (): string | undefined => {
+    const excluded = vscode.workspace
+      .getConfiguration("agentHarness")
+      .get<string[]>("exclude", ["**/node_modules/**"]);
+    return excluded.length ? `{${excluded.join(",")}}` : undefined;
+  };
+
   // --- discovery: suite file -> tests -> scorer children -------------
   const discover = async (uri: vscode.Uri) => {
     const doc = await vscode.workspace.openTextDocument(uri);
@@ -41,7 +48,7 @@ export function activate(context: vscode.ExtensionContext) {
   };
 
   vscode.workspace
-    .findFiles("**/*.agent-test.yaml", "**/node_modules/**")
+    .findFiles("**/*.agent-test.yaml", suiteExcludeGlob())
     .then((uris) => uris.forEach(discover));
   const watcher = vscode.workspace.createFileSystemWatcher("**/*.agent-test.yaml");
   watcher.onDidCreate(discover);
