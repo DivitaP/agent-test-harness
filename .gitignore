@@ -1,5 +1,53 @@
-.venv
-.pytest_cache
-__pycache__
-node_modules
-package-lock.json
+# Operating system and editor files
+.DS_Store
+Thumbs.db
+*.swp
+*.swo
+*.code-workspace
+
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# Python environments, builds, and caches
+.venv/
+venv/
+env/
+ENV/
+.verify-venv/
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+.eggs/
+build/
+dist/
+.pytest_cache/
+.coverage
+.coverage.*
+coverage.xml
+htmlcov/
+.hypothesis/
+.mypy_cache/
+.pyre/
+.ruff_cache/
+.tox/
+.nox/
+
+# Node and VS Code extension build artifacts
+**/node_modules/
+**/.npm/
+**/.yarn/
+**/.pnpm-store/
+vscode-extension/out/
+*.vsix
+.vscode-test/
+
+# Logs and temporary files
+*.log
+*.tmp
+*.temp

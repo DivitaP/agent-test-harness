@@ -1,5 +1,5 @@
 import * as vscode from "vscode";
-import { isFailure, parseSuite } from "../parseSuite";
+import { isFailure, parseSuite } from "./parseSuite";
 import { Report, summarizeTest, TestResult } from "./report";
 import { runCli } from "./runner";
 import { showTracePanel } from "./tracePanel";
