@@ -17,6 +17,10 @@ class ProcessExpectation(BaseModel):
         default=True,
         description="IF True, tools must appear in this relative order (gaps allowed)",
     )
+    forbidden_tools: list[str] = Field(
+        default_factory=list,
+        description="Tool names that must not be called during this test.",
+    )
 
 class EvidenceExpectation(BaseModel):
     """
@@ -29,6 +33,10 @@ class EvidenceExpectation(BaseModel):
     min_relevance: float | None = Field(
         default=None, ge=0.0, le=1.0,
         description="Optional embedding-similarity threshold between task and evidence."
+    )
+    required_tools: list[str] = Field(
+        default_factory=list,
+        description="Tools that must return successful evidence for this test to pass.",
     )
 
 class OutputExpectation(BaseModel):

@@ -7,6 +7,7 @@ tests:
       strict_order: true
     evidence:
       required: true
+      required_tools: ["lookup_order", "check_refund_policy"]
     output:
       rubric: >
         Must confirm a refund of $68.00 for order 4412, cite that damaged items
@@ -20,6 +21,7 @@ tests:
     process:
       expected_tools: ["lookup_order", "check_refund_policy"]
       strict_order: true
+      forbidden_tools: ["issue_refund"]
     evidence:
       required: true
     output:

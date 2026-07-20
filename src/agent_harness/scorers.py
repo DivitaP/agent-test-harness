@@ -102,10 +102,16 @@ def score_process(exp: ProcessExpectation, trace: Trace) -> ScoreResult:
 
     score = matched / len(expected)
     unexpected = [t for t in actual if t not in expected]
+    forbidden = [t for t in actual if t in exp.forbidden_tools]
     failed_calls = [tc.name for tc in trace.tool_calls if not tc.succeeded]
 
-    passed = score == 1.0
-    if passed:
+    passed = score == 1.0 and not forbidden
+    if forbidden:
+        reason = (
+            f"forbidden tool(s) called: {forbidden}; "
+            f"actual sequence: {actual}"
+        )
+    elif passed:
         reason = f"all {len(expected)} expected tools called in order"
     else:
         reason = f"matched {matched}/{len(expected)} expected tools; actual sequence: {actual}"
@@ -119,6 +125,8 @@ def score_process(exp: ProcessExpectation, trace: Trace) -> ScoreResult:
             "expected": expected,
             "actual": actual,
             "unexpected_tools": unexpected,
+            "forbidden_tools": exp.forbidden_tools,
+            "forbidden_calls": forbidden,
             "failed_tool_calls": failed_calls,
             "agent_error": trace.error,
         },
@@ -145,6 +153,8 @@ def score_evidence(
         embed_fn: EmbedFn | None = None,
 ) -> ScoreResult:
     evidence = trace.evidence
+    successful_tools = {call.name for call in trace.tool_calls if call.succeeded and call.output}
+    missing_required_tools = [tool for tool in exp.required_tools if tool not in successful_tools]
 
     if exp.required and not evidence:
         return ScoreResult(
@@ -155,6 +165,25 @@ def score_evidence(
                     "(answered without evidence)",
             details={"evidence_count": 0, "agent_error": trace.error},
         )
+
+    if missing_required_tools:
+        matched = len(exp.required_tools) - len(missing_required_tools)
+        score = matched / len(exp.required_tools)
+        return ScoreResult(
+            scorer="evidence",
+            passed=False,
+            score=score,
+            reason=(
+                "missing successful evidence from required tool(s): "
+                f"{missing_required_tools}"
+            ),
+            details={
+                "evidence_count": len(evidence),
+                "required_tools": exp.required_tools,
+                "successful_tools": sorted(successful_tools),
+                "missing_required_tools": missing_required_tools,
+            },
+        )
     
     if exp.min_relevance is None:
         return ScoreResult(
@@ -162,7 +191,11 @@ def score_evidence(
             passed=True,
             score=1.0,
             reason=f"{len(evidence)} evidence chunk(s) gathered before answering",
-            details={"evidence_count": len(evidence)},
+            details={
+                "evidence_count": len(evidence),
+                "required_tools": exp.required_tools,
+                "successful_tools": sorted(successful_tools),
+            },
         )
     
     if embed_fn is None and not _has_openai_credentials():

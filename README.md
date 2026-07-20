@@ -75,8 +75,10 @@ install the `demo` extras and set `GROQ_API_KEY`, then run:
         process:                        # optional
           expected_tools: ["search_studies", "get_study_details"]
           strict_order: true            # ordered subsequence; false = multiset
+          forbidden_tools: ["delete_study"]  # optional safety guard
         evidence:                       # optional
           required: true
+          required_tools: ["get_study_details"]  # optional required source
           min_relevance: 0.3            # optional cosine threshold vs task
         output:                         # required
           rubric: "Must cite SL-88 and the 22 percent latency improvement."

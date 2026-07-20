@@ -60,6 +60,17 @@ def test_process_empty_actual():
     assert not r.passed and r.score == 0.0
 
 
+def test_process_forbidden_tool_fails_even_when_expected_tools_match():
+    exp = ProcessExpectation(
+        expected_tools=["lookup_order", "check_refund_policy"],
+        forbidden_tools=["issue_refund"],
+    )
+    r = score_process(exp, make_trace(["lookup_order", "check_refund_policy", "issue_refund"]))
+    assert not r.passed
+    assert r.score == 1.0
+    assert r.details["forbidden_calls"] == ["issue_refund"]
+
+
 # --------------------------------------------------------------- evidence
 
 def test_evidence_present_passes():
@@ -71,6 +82,20 @@ def test_evidence_missing_fails():
     r = score_evidence(EvidenceExpectation(required=True), make_trace([]))
     assert not r.passed
     assert "without evidence" in r.reason
+
+
+def test_evidence_requires_named_tool_output():
+    exp = EvidenceExpectation(required=True, required_tools=["check_refund_policy"])
+    r = score_evidence(exp, make_trace(["lookup_order"]))
+    assert not r.passed
+    assert r.score == 0.0
+    assert "check_refund_policy" in r.reason
+
+
+def test_evidence_required_tools_pass_when_present():
+    exp = EvidenceExpectation(required=True, required_tools=["lookup_order", "check_refund_policy"])
+    r = score_evidence(exp, make_trace(["lookup_order", "check_refund_policy"]))
+    assert r.passed
 
 
 def test_evidence_relevance_with_fake_embeddings():
