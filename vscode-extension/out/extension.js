@@ -6,8 +6,10 @@ const vscode = require("vscode");
 const parseSuite_1 = require("./parseSuite");
 const report_1 = require("./report");
 const runner_1 = require("./runner");
+const summaryPanel_1 = require("./summaryPanel");
 const tracePanel_1 = require("./tracePanel");
 const lastResults = new Map(); // test item id -> latest result
+const lastReports = new Map(); // suite item id -> latest report
 function activate(context) {
     const controller = vscode.tests.createTestController("agentHarness", "Agent Harness");
     context.subscriptions.push(controller);
@@ -66,10 +68,12 @@ function activate(context) {
                 return; // filtered out of this run
             lastResults.set(testItem.id, result);
             const outcome = (0, report_1.summarizeTest)(result);
+            testItem.description = `${result.pass_rate.toFixed(2)} pass rate · ${outcome.passed ? "all checks passed" : "action needed"}`;
             testItem.children.forEach((scorerItem) => {
                 const s = outcome.scorers[scorerItem.label];
                 if (!s)
                     return run.skipped(scorerItem);
+                scorerItem.description = `${(result.scorer_pass_rates[scorerItem.label] * 100).toFixed(0)}%`;
                 s.passed
                     ? run.passed(scorerItem)
                     : run.failed(scorerItem, new vscode.TestMessage(s.message ?? "failed"));
@@ -119,7 +123,11 @@ function activate(context) {
                 run.errored(suite, new vscode.TestMessage(outcome.message));
                 continue;
             }
+            lastReports.set(suite.id, outcome.report);
             applyReport(run, suite, outcome.report);
+            // Put the explanation in front of the developer immediately; the
+            // Test Explorer remains available for reruns and individual traces.
+            (0, summaryPanel_1.showSummaryPanel)(outcome.report, uri.fsPath);
         }
         run.end();
     }, true);
@@ -136,6 +144,15 @@ function activate(context) {
             return;
         }
         (0, tracePanel_1.showTracePanel)(result, vscode.workspace.asRelativePath(test.uri));
+    }));
+    context.subscriptions.push(vscode.commands.registerCommand("agentHarness.showSummary", (item) => {
+        const suite = item ? suiteOf(item) : undefined;
+        const report = suite ? lastReports.get(suite.id) : [...lastReports.values()].at(-1);
+        if (!report) {
+            vscode.window.showInformationMessage("Run Agent Harness tests first to see a results summary.");
+            return;
+        }
+        (0, summaryPanel_1.showSummaryPanel)(report, suite?.uri ? vscode.workspace.asRelativePath(suite.uri) : "latest run");
     }));
 }
 function deactivate() { }

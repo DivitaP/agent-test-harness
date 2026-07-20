@@ -12,10 +12,12 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      { "command": "agentHarness.showTrace", "title": "Agent Harness: Show Trace" }
+      { "command": "agentHarness.showTrace", "title": "Agent Harness: Show Trace" },
+      { "command": "agentHarness.showSummary", "title": "Agent Harness: Show Results Summary" }
     ],
     "menus": {
       "testing/item/context": [
+        { "command": "agentHarness.showSummary", "when": "controllerId == 'agentHarness'" },
         { "command": "agentHarness.showTrace", "when": "controllerId == 'agentHarness'" }
       ]
     },
@@ -37,7 +39,7 @@
     }
   },
   "scripts": {
-    "compile": "tsc -p .",
+    "compile": "tsc -p . --types node,vscode",
     "watch": "tsc -w -p .",
     "test": "vitest run"
   },

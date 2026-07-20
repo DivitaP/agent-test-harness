@@ -18,21 +18,30 @@ from agent_harness.scorers import DEFAULT_JUDGE_MODEL
 from agent_harness.suite_runner import run_suite
 
 def _render_console(report: Report) -> None:
+    print("\nAgent Harness Results")
+    print("=" * 22)
     for suite in report.suites:
-        print(f"\nsuite {suite.suite_path} (target {suite.target})")
+        print(f"\nSuite: {suite.suite_path}")
+        print(f"Target: {suite.target}")
         for t in suite.tests:
             mark = "PASS" if t.passed else "FAIL"
             n_passed = sum(r.passed for r in t.runs)
-            breakdown = " | ".join(
-                f"{k} {v:.2f}" for k,v in t.scorer_pass_rates.items()
+            print(f"\n  [{mark}] {t.name}")
+            print(
+                f"    Runs: {n_passed}/{len(t.runs)} passed "
+                f"({t.pass_rate:.0%}; required {t.min_pass_rate:.0%})"
             )
-            print(f" [{mark}] {t.name} runs {n_passed}/{len(t.runs)} [{breakdown}]")
+            for scorer, rate in t.scorer_pass_rates.items():
+                scorer_mark = "PASS" if rate >= t.min_pass_rate else "FAIL"
+                print(f"    {scorer.title():8} [{scorer_mark}] {rate:.0%}")
             if not t.passed:
                 first_fail = next(r for r in t.runs if not r.passed)
                 for s in first_fail.scores:
                     if not s.passed:
-                        print(f"    {s.scorer}: {s.reason}")
-    print(f"\n{report.passed_tests}/{report.total_tests} tests passed")
+                        print(f"    Why: {s.scorer.title()} — {s.reason}")
+                print("    Next: open the failed test's trace to inspect the tool timeline.")
+    overall = "PASS" if report.all_passed else "ACTION NEEDED"
+    print(f"\nOverall: {overall} — {report.passed_tests}/{report.total_tests} tests passed")
 
 def main(
     argv: list[str] | None=None,
@@ -76,6 +85,13 @@ def main(
 
     suites = []
     for sp in suite_paths:
+        # Also make sibling/external demo projects importable. This lets a
+        # workspace run `agent-harness run ../support_desk/support_tests/`
+        # without requiring the user to set PYTHONPATH manually.
+        resolved_suite = sp.resolve()
+        for ancestor in list(resolved_suite.parents)[:3]:
+            if str(ancestor) not in sys.path:
+                sys.path.insert(0, str(ancestor))
         try:
             suites.append(
                 run_suite(
