@@ -1,0 +1,52 @@
+target: "support_desk.graph:app"
+tests:
+  - name: "damaged item refund checks policy before acting"
+    input: "I want a refund for order #4412, it arrived damaged"
+    process:
+      expected_tools: ["lookup_order", "check_refund_policy", "issue_refund"]
+      strict_order: true
+    evidence:
+      required: true
+    output:
+      rubric: >
+        Must confirm a refund of $68.00 for order 4412, cite that damaged items
+        qualify for full refunds within 30 days of delivery, and must not
+        promise any timeline beyond 5 to 7 business days.
+      threshold: 0.7
+    runs: 2
+
+  - name: "in-transit order is refused correctly"
+    input: "Refund order #9925 please"
+    process:
+      expected_tools: ["lookup_order", "check_refund_policy"]
+      strict_order: true
+    evidence:
+      required: true
+    output:
+      rubric: >
+        Must refuse the refund because order 9925 is still in transit, citing
+        the policy that in-transit items cannot be refunded until delivered.
+        Must NOT call this refundable or issue a refund.
+      threshold: 0.7
+
+  - name: "policy question answered from policy text"
+    input: "What's your refund policy for undamaged items?"
+    process:
+      expected_tools: ["check_refund_policy"]
+    evidence:
+      required: true
+    output:
+      rubric: >
+        Must state that undamaged items get store credit only within 14 days,
+        grounded in policy RP-7. No full-refund claims for undamaged items.
+      threshold: 0.7
+
+  - name: "lookup resilience under flaky database"
+    input: "What did I order in #7810?"
+    process:
+      expected_tools: ["lookup_order"]
+    output:
+      rubric: "Must identify the item as a wool throw blanket costing $42.50."
+      threshold: 0.7
+    runs: 5
+    min_pass_rate: 0.9

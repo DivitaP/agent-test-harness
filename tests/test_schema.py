@@ -50,8 +50,7 @@ def test_output_is_mandatory():
 
 def test_discover_finds_example():
     found = discover_suites(EXAMPLES)
-    assert len(found) == 1
-    assert found[0].name == "research_agent.agent-test.yaml"
+    assert "research_agent.agent-test.yaml" in {path.name for path in found}
 
 def test_min_pass_rate_default():
     t = AgentTest.model_validate({"name": "t", "input": "q", "output": {"rubric": "r"}})

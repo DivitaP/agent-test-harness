@@ -44,11 +44,27 @@ call's name, input, output, error, and timing.
 ## Quick start
 
     python -m venv .venv && source .venv/bin/activate
-    pip install -e ".[dev]"
-    pytest                       # 53 offline tests, no API key needed
+    pip install -e ".[dev,demo]"
+    pytest                       # offline tests, no API key needed
 
     export OPENAI_API_KEY=sk-...
     agent-harness run demo_tests/
+
+## Support Desk example
+
+The repository includes a complete fictional refund agent in
+[`examples/support_desk`](examples/support_desk/). It demonstrates why agent
+tests need more than an answer check: in `skip_policy` mode the agent gives a
+confident, correct-looking refund answer while skipping a required policy
+lookup.
+
+    agent-harness run examples/support_desk/support_tests/
+    DEMO_FAILURE_MODE=skip_policy agent-harness run examples/support_desk/support_tests/
+
+The example works offline for repeatable tests. To use the live Streamlit demo,
+install the `demo` extras and set `GROQ_API_KEY`, then run:
+
+    streamlit run examples/support_desk/scripts/support_ui.py
 
 ## Test file reference
 
