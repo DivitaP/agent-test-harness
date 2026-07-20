@@ -25,8 +25,7 @@ function failureExplanation(test: TestResult): string {
   if (!firstFailure) return "";
   return `<div class="explanation"><strong>What failed:</strong>
     ${esc(firstFailure.scorer)} — ${esc(firstFailure.reason)}
-    <br><strong>Next:</strong> right-click this test in Test Explorer and choose
-    <em>Agent Harness: Show Trace</em> to inspect the exact tool timeline.</div>`;
+    <br><strong>Next:</strong> select <em>View trace</em> to inspect the exact tool timeline.</div>`;
 }
 
 function testCard(test: TestResult): string {
@@ -37,6 +36,7 @@ function testCard(test: TestResult): string {
     <div class="meta">${passedRuns}/${test.runs.length} runs passed · required ${Math.round(test.min_pass_rate * 100)}%</div>
     <div class="scores">${scorerCards(test)}</div>
     ${failureExplanation(test)}
+    <button class="trace-button" data-trace="${esc(test.name)}">View trace</button>
   </article>`;
 }
 
@@ -75,6 +75,8 @@ export function renderSummaryHtml(report: Report, suitePath: string, passed: num
     .score.good { border-bottom: 2px solid var(--vscode-testing-iconPassed); }
     .score.bad { border-bottom: 2px solid var(--vscode-testing-iconFailed); }
     .explanation { margin: .8rem 0 .1rem 2rem; padding: .65rem; border-radius: 4px; background: var(--vscode-textBlockQuote-background); line-height: 1.45; }
+    .trace-button { margin: .8rem 0 0 2rem; padding: .35rem .65rem; cursor: pointer; color: var(--vscode-button-foreground); background: var(--vscode-button-background); border: 0; border-radius: 3px; }
+    .trace-button:hover { background: var(--vscode-button-hoverBackground); }
     code { font-family: var(--vscode-editor-font-family); }
   </style></head><body>
     <div class="hero"><span class="count">${passed}/${total}</span><strong>${headline}</strong>
@@ -82,5 +84,13 @@ export function renderSummaryHtml(report: Report, suitePath: string, passed: num
     </div>
     <p class="subtitle">Suite: ${esc(suitePath)}</p>
     ${report.suites.map(suiteBlock).join("")}
+    <script>
+      const vscode = acquireVsCodeApi();
+      document.querySelectorAll("[data-trace]").forEach((button) => {
+        button.addEventListener("click", () =>
+          vscode.postMessage({ command: "openTrace", testName: button.dataset.trace })
+        );
+      });
+    </script>
   </body></html>`;
 }
