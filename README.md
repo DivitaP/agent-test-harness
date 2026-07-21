@@ -15,7 +15,7 @@ tells you *which stage broke*:
 - **evidence**: did it gather grounding before answering (presence check plus
   optional embedding-relevance threshold)
 - **output**: does the final answer satisfy a natural-language rubric
-  (GPT-5.6 as judge, temperature 0, structured verdict)
+  (a configured model judge or deterministic offline fallback)
 
 The one-line pitch: an agent that answers "36" without ever calling the
 calculator passes every string-match framework. This harness fails it, with
@@ -38,7 +38,7 @@ runtime safeguard.
                               │                      │
                               │          Trace: tool calls, evidence, answer
                               ▼                      ▼
-                  process scorer    evidence scorer    output scorer (GPT-5.6)
+                  process scorer    evidence scorer    output scorer
                               └───────────┬──────────┘
                         JSON report (per-scorer pass rates over N runs)
                               ┌───────────┴──────────┐
@@ -76,6 +76,7 @@ For standard package development instead:
     pip install -e ".[dev,demo]"
     pytest                       # offline tests, no API key needed
 
+    # Optional: the separate research-agent example uses OpenAI by default.
     export OPENAI_API_KEY=sk-...
     agent-harness run demo_tests/
 
@@ -97,8 +98,9 @@ lookup.
     agent-harness run examples/support_desk/support_tests/
     DEMO_FAILURE_MODE=skip_policy agent-harness run examples/support_desk/support_tests/
 
-The example works offline for repeatable tests. To use the live Streamlit demo,
-install the `demo` extras and set `GROQ_API_KEY`, then run:
+The example works offline for repeatable tests. Its live Support Desk agent
+uses Groq (`llama-3.3-70b-versatile`). To use the live Streamlit demo, install
+the `demo` extras, set `GROQ_API_KEY`, then run:
 
     streamlit run examples/support_desk/scripts/support_ui.py
 
@@ -151,11 +153,12 @@ building the CLI and VS Code workflows, iterating on the Support Desk demo,
 running the Python and TypeScript test suites, and improving the failure
 experience until it was understandable at a glance.
 
-GPT-5.6 is used as the model-backed output judge for semantic rubric scoring
-and as the default model for the research demo agent when live credentials are
-available. The judge returns a structured verdict at temperature 0. The project
-also includes deterministic offline fallbacks, so contributors can run the
-tests and Support Desk demonstration without an API key.
+The Support Desk demo uses Groq and `GROQ_API_KEY` when a live model is
+available; otherwise it uses a deterministic offline graph, so its tests and
+core demonstration need no API key. Separately, GPT-5.6 is the default
+model-backed output judge and the default model for the research demo agent
+when `OPENAI_API_KEY` is configured. The judge returns a structured verdict at
+temperature 0.
 
 ## Evaluation
 
@@ -166,8 +169,8 @@ flags the broken stage while healthy stages stay green. Results:
 ## Built with
 
 Built new for the OpenAI hackathon (Developer Tools). Developed with Codex.
-GPT-5.6 is structural: it drives the demo agent's tool choice and serves as
-the output judge.
+The Support Desk demo uses Groq for its optional live agent; GPT-5.6 is used
+by the separate research demo and the optional model-backed output judge.
 
 ## Limitations
 
