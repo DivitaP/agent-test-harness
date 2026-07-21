@@ -12,7 +12,7 @@ export function showSummaryPanel(report: Report, suitePath: string): void {
     "agentHarnessSummary",
     `${report.all_passed ? "✓" : "!"} Agent Harness Results`,
     vscode.ViewColumn.One,
-    { enableFindWidget: true }
+    { enableFindWidget: true, enableScripts: true }
   );
   panel.webview.html = renderSummaryHtml(report, suitePath, passed);
   panel.webview.onDidReceiveMessage((message: { command?: string; testName?: string }) => {

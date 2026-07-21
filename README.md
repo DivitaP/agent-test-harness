@@ -1,5 +1,7 @@
 # Agent Test Harness for LangGraph
 
+**Repository:** https://github.com/DivitaP/agent-test-harness
+
 Semantic testing for agentic pipelines: a Python CLI plus a VS Code extension.
 Write tests against what your agent should *do*, not the exact string it
 returns. Every run is scored on three independent stages, so a failed test
@@ -43,7 +45,29 @@ Tracing needs zero agent instrumentation: LangGraph propagates config to
 every node, so a callback handler attached at `invoke()` sees each tool
 call's name, input, output, error, and timing.
 
-## Quick start
+## Installation, testing, and supported platforms
+
+**Supported:** macOS and Linux. Windows users can run the project in WSL or
+Git Bash because the demo bootstrap scripts use Bash.
+
+**Requirements:** Python 3.10+, Node.js 20+, npm, Git, and VS Code 1.90+ for
+the extension demo.
+
+For the cleanest hackathon-demo setup, clone the repository and run:
+
+    bash scripts/bootstrap_demo.sh
+
+This creates an isolated `.demo-venv` and installs the core package, tests,
+and optional live-demo dependencies. Then verify the self-contained Support
+Desk suite:
+
+    bash scripts/run_harness.sh run examples/support_desk/support_tests/
+
+Expected result:
+
+    Overall: PASS — 4/4 tests passed
+
+For standard package development instead:
 
     python -m venv .venv && source .venv/bin/activate
     pip install -e ".[dev,demo]"
@@ -51,13 +75,6 @@ call's name, input, output, error, and timing.
 
     export OPENAI_API_KEY=sk-...
     agent-harness run demo_tests/
-
-### Hackathon demo setup
-
-For a clean, repeatable demo environment—especially on a machine with an old
-virtual environment—run this once from the repository root:
-
-    bash scripts/bootstrap_demo.sh
 
 Then open the repository root in VS Code, press `F5` from
 `vscode-extension/` to launch the Extension Development Host, and open the
@@ -117,10 +134,25 @@ The demo agent has injectable failure modes (env var, agent code unchanged):
 ## VS Code extension
 
 Each test appears in the native Test Explorer with three scorer children,
-run buttons in the YAML gutter, single-test re-runs, and a trace webview
-(right-click > Agent Harness: Show Trace) showing per-run scores, the
-tool-call table, and the judge's reasoning. Settings: `agentHarness.command`
-(CLI invocation) and `agentHarness.extraEnv` (e.g. DEMO_FAILURE_MODE).
+run buttons in the YAML gutter, single-test re-runs, and an automatic results
+summary. The summary explains each failure and opens the tool trace in one
+click, showing per-run scores, tool calls, and judge reasoning. Settings:
+`agentHarness.command` (CLI invocation) and `agentHarness.extraEnv` (for
+example, `DEMO_FAILURE_MODE`).
+
+## Built with Codex and GPT-5.6
+
+I built this project solo with Codex as my coding collaborator. Codex helped
+me turn the product idea into an implementation: designing the test schema,
+building the CLI and VS Code workflows, iterating on the Support Desk demo,
+running the Python and TypeScript test suites, and improving the failure
+experience until it was understandable at a glance.
+
+GPT-5.6 is used as the model-backed output judge for semantic rubric scoring
+and as the default model for the research demo agent when live credentials are
+available. The judge returns a structured verdict at temperature 0. The project
+also includes deterministic offline fallbacks, so contributors can run the
+tests and Support Desk demonstration without an API key.
 
 ## Evaluation
 
