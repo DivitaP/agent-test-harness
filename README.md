@@ -27,6 +27,8 @@ runtime safeguard.
 
 ## Architecture
 
+![Agent Harness architecture](docs/images/agent_harness_architecture.png)
+
     .agent-test.yaml ──> suite runner ──> traced run (LangGraph callbacks)
                               │                      │
                               │          Trace: tool calls, evidence, answer
@@ -70,6 +72,8 @@ tests need more than an answer check: in `skip_policy` mode the agent gives a
 confident, correct-looking refund answer while skipping a required policy
 lookup.
 
+![Healthy behavior compared with the skip-policy regression](docs/images/skip_policy_regression_story.png)
+
     agent-harness run examples/support_desk/support_tests/
     DEMO_FAILURE_MODE=skip_policy agent-harness run examples/support_desk/support_tests/
 
@@ -77,6 +81,9 @@ The example works offline for repeatable tests. To use the live Streamlit demo,
 install the `demo` extras and set `GROQ_API_KEY`, then run:
 
     streamlit run examples/support_desk/scripts/support_ui.py
+
+For the step-by-step VS Code demonstration, see
+[the demo runbook](docs/demo-runbook.md).
 
 ## Test file reference
 
