@@ -2,6 +2,9 @@
 
 **Repository:** https://github.com/DivitaP/agent-test-harness
 
+**Built solo by:** DivitaP. The `divitas` name visible in commit metadata is a
+local Git alias used while developing the project.
+
 Semantic testing for agentic pipelines: a Python CLI plus a VS Code extension.
 Write tests against what your agent should *do*, not the exact string it
 returns. Every run is scored on three independent stages, so a failed test
